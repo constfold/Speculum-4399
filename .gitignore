@@ -1,5 +1,7 @@
 /.venv
 /.vscode
-/out
-/injector/libs
+/out/*
+/injector/libs/*
+!.gitkeep
 .env
+__pycache__

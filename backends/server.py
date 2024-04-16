@@ -1,27 +1,29 @@
 import requests
 import json
 
-from http.server import BaseHTTPRequestHandler, HTTPServer
-from dotenv import dotenv_values
-
-from .. import buildswf
-
-config = {**dotenv_values(".env")}
+from http.server import BaseHTTPRequestHandler
 
 
 class Handler(BaseHTTPRequestHandler):
+    def __init__(self, base_url):
+        self.base_url = base_url
+
     def do_GET(self):
         if self.path.endswith(".swf"):
             try:
-                response = requests.get("http://localhost:8080")
+                response = requests.get(
+                    self.base_url + self.path,
+                    headers={"Referer": "http://www.4399.com"},
+                )
             except:
                 self.send_response(500)
                 return
             self.send_response(200)
             self.wfile.write(response.content)
         else:
+            # TODO: Serve other resources
             pass
 
-
-with HTTPServer((config["BACKEND_ADDR"], config["BACKEND_PORT"]), Handler) as httpd:
-    httpd.serve_forever()
+    def do_POST(self):
+        # TODO: Handle POST requests
+        pass
