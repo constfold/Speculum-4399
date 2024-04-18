@@ -65,6 +65,8 @@ class SpeculumHandler(BaseHTTPRequestHandler):
             if match:
                 handler["handler"](self, query, **match.groupdict())
                 return
+        logging.error(f"Unhandled GET {url.geturl()}")
+        self.send_response(404)
 
     def do_POST(self):
         url = urlparse(
@@ -82,3 +84,5 @@ class SpeculumHandler(BaseHTTPRequestHandler):
             if match:
                 handler["handler"](self, data, **match.groupdict())
                 return
+        logging.error(f"Unhandled POST {url.geturl()}")
+        self.send_response(404)
