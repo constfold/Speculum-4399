@@ -1,4 +1,5 @@
-![arch](ARCHITECTURE.png)
+<h1 align=center>SPECULUM-4399</h1>
+<p align=center></div><img src="ARCHITECTURE.png" style="width: 50%;"/></p>
 
 > [!NOTE]
 > 项目仅仅满足个人学习交流，不保证任何有效性。
