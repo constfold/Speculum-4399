@@ -21,7 +21,7 @@
 ## 注意事项
 
 由于本地 Flash Player 的限制，你需要将当前目录添加信任。具体步骤如下：
-```
+```shell
 set CWD=%CD%
 echo %CWD% > %APPDATA%\Macromedia\Flash Player\#Security\FlashPlayerTrust\trust.cfg
 ```
