@@ -6,9 +6,8 @@ import os
 import json
 
 
-class SWFBuilder:
-    def __init__(self, flex_sdk, game_swf):
-        self.game_swf = game_swf
+class SWFUtil:
+    def __init__(self, flex_sdk):
         self.java = shutil.which("java")
         if not self.java:
             raise "Java not found in PATH"
@@ -16,20 +15,23 @@ class SWFBuilder:
         self.cwd = Path(os.getcwd())
         flex_sdk = Path(flex_sdk)
         self.mxmlc = flex_sdk / "bin" / "mxmlc.bat"
-        self.injector = self.cwd / "out" / "artifacts" / "injector_jar" / "injector.jar"
+        self.swfutil = (
+            self.cwd / "out" / "swfutil" / "swfutil-1.0-jar-with-dependencies.jar"
+        )
 
         assert self.mxmlc.exists(), "mxmlc not found"
-        assert self.injector.exists(), "injector jar not found"
+        assert self.swfutil.exists(), "swfutil jar not found"
 
-    def build_loader(self, width, height, frame_rate):
-        compiler_options = [str(self.mxmlc)]
+    def build_loader(self, width: int, height: int, frame_rate: int, output: Path):
+        compiler_options = [self.mxmlc]
         compiler_options.extend(
-            [str(self.cwd / "injector" / "speculum" / "loader" / "SpeculumLoader.as")]
+            [self.cwd / "core" / "speculum" / "loader" / "SpeculumLoader.as"]
         )
         compiler_options.extend(["-strict"])
-        compiler_options.extend(["-output", str(self.cwd / "out" / "_Main.swf")])
+        compiler_options.extend(["-debug"])
+        compiler_options.extend(["-output", output])
         compiler_options.extend(
-            ["-source-path", str(self.cwd / "injector"), str(self.cwd / "external")]
+            ["-source-path", self.cwd / "core", self.cwd / "external"]
         )
         compiler_options.extend(["-target-player=32.0"])
         compiler_options.extend(["-swf-version=32"])
@@ -39,21 +41,16 @@ class SWFBuilder:
         logging.debug(compiler_options)
         sp.run(compiler_options, check=True)
 
-    def build_interceptor(self):
+    def build_interceptor(self, output: Path):
 
-        compiler_options = [str(self.mxmlc)]
+        compiler_options = [self.mxmlc]
         compiler_options.extend(
-            [
-                self.cwd
-                / "injector"
-                / "speculum"
-                / "interceptor"
-                / "SpeculumInterceptor.as"
-            ]
+            [self.cwd / "core" / "speculum" / "interceptor" / "SpeculumInterceptorMain.as"]
         )
         compiler_options.extend(["-strict"])
-        compiler_options.extend(["-output", self.cwd / "out" / "_Interceptor.swf"])
-        compiler_options.extend(["-source-path", self.cwd / "injector"])
+        compiler_options.extend(["-debug"])
+        compiler_options.extend(["-output", output])
+        compiler_options.extend(["-source-path", self.cwd / "core"])
         compiler_options.extend(["-target-player=32.0"])
         compiler_options.extend(["-swf-version=32"])
         compiler_options.extend(["-use-network"])
@@ -62,12 +59,13 @@ class SWFBuilder:
 
         sp.run(compiler_options, check=True)
 
-    def get_swf_info(self):
+    def get_info(self, swf: Path):
         info = sp.run(
-            [self.java, "-jar", self.injector, "info", self.game_swf],
-            stdout=sp.PIPE,
+            [self.java, "-jar", self.swfutil, "info", swf],
             check=True,
+            stdout=sp.PIPE,
         ).stdout
+        logging.info(info)
         info = json.loads(info)
 
         # twip to pixie
@@ -75,32 +73,39 @@ class SWFBuilder:
         info["height"] = info["height"] // 20
         return info
 
-    def build_injected_swf(self):
+    def merge(self, original: Path, new: Path, output: Path):
         sp.run(
             [
                 self.java,
                 "-jar",
-                self.injector,
+                self.swfutil,
                 "merge",
-                self.game_swf,
-                self.cwd / "out" / "_Interceptor.swf",
-                self.cwd / "out" / "_Merged.swf",
+                original,
+                new,
+                output,
             ],
             check=True,
         )
+
+    def inject(self, swf: Path, output: Path):
         sp.run(
             [
                 self.java,
                 "-jar",
-                self.injector,
+                self.swfutil,
                 "inject",
-                self.cwd / "out" / "_Merged.swf",
+                swf,
                 "speculum.interceptor",
-                "SpeculumInterceptor",
-                self.cwd / "out" / "_Game.swf",
+                output,
             ],
             check=True,
         )
+
+    def extract(self, swf: Path, output: Path) -> bool:
+        returncode = sp.run(
+            [self.java, "-jar", self.swfutil, "extract", swf, output]
+        ).returncode
+        return returncode == 0
 
 
 if __name__ == "__main__":
@@ -109,13 +114,12 @@ if __name__ == "__main__":
     config = dotenv_values(".env")
 
     logging.basicConfig(level=logging.DEBUG)
-    logging.info("SDK Path: " + config["SDK_PATH"])
+    logging.info("SDK Path: " + config["FLEX_PATH"])
 
-    sdk_path = Path(config["SDK_PATH"])
-    game_swf = Path(config["GAME_PATH"])
+    sdk_path = Path(config["FLEX_PATH"])
 
-    builder = SWFBuilder(sdk_path, game_swf)
-    info = builder.get_swf_info()
+    builder = SWFUtil(sdk_path)
+    info = builder.get_swf_info("out/_Game.swf")
     frame_rate = int(info["frame_rate"])
     width = info["width"]
     height = info["height"]

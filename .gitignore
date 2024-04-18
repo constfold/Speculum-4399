@@ -1,7 +1,8 @@
 /.venv
 /.vscode
+/swfutil/.idea
 /out/*
-/injector/libs/*
+/swfutil/libs/*
 !.gitkeep
 .env
 __pycache__

@@ -1,0 +1,14 @@
+{
+	"compilerOptions": {
+		"source-path": [
+			"core",
+			"external"
+		],
+		"swf-version": 32,
+		"target-player": "32.0",
+		"output": "out/Main.swf"
+		// "output": "out/_Interceptor.swf"
+	},
+	"mainClass": "speculum.loader.SpeculumLoader"
+	// "mainClass": "speculum.interceptor.SpeculumInterceptorMain"
+}
