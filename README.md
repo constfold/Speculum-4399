@@ -18,6 +18,14 @@
     py -3 main.py run
     ```
 
+## 注意事项
+
+由于本地 Flash Player 的限制，你需要将当前目录添加信任。具体步骤如下：
+```
+set CWD=%CD%
+echo %CWD% > %APPDATA%\Macromedia\Flash Player\#Security\FlashPlayerTrust\trust.cfg
+```
+
 ## 构建
 
 0. 首先确保已正确安装 Python3, Java, Apache Flex, Adobe Flash Player Standalone。
