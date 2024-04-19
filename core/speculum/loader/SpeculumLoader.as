@@ -167,5 +167,14 @@ package speculum.loader
 		{
 			trace("getVariables, idx: " + idx + ", ids: " + ids);
 		}
+
+		public function getStoreState():void
+		{
+			trace("getStoreState");
+			setTimeout(function():void
+				{
+					stage.dispatchEvent(new DataEvent("StoreStateEvent", false, false, "1"));
+				}, 500);
+		}
 	}
 }

@@ -158,9 +158,12 @@ class Main {
                     if (m.kind == Multiname.MULTINAME) {
                         val simpleName = m.getName(a.constants, ArrayList(), true, false)
 
-                        val nsToSearch = if (simpleName == "URLLoader") "flash.net"
-                        else if (simpleName == "Loader") "flash.display"
-                        else continue
+                        val nsToSearch = when (simpleName) {
+                            "URLLoader" -> "flash.net"
+                            "Loader" -> "flash.display"
+                            "ExternalInterface" -> "flash.external"
+                            else -> continue
+                        }
 
                         for (ns in a.constants.getNamespaceSet(m.namespace_set_index).namespaces) {
                             if (a.constants.namespaceToString(ns) == nsToSearch) {
@@ -182,6 +185,12 @@ class Main {
                         "flash.display.Loader" -> {
                             m.namespace_index = packageNs
                             m.name_index = a.constants.getStringId("SpeculumInterceptorLoader", true)
+                            (ct as Tag).isModified = true
+                        }
+
+                        "flash.external.ExternalInterface" -> {
+                            m.namespace_index = packageNs
+                            m.name_index = a.constants.getStringId("SpeculumInterceptorExternalInterface", true)
                             (ct as Tag).isModified = true
                         }
                     }

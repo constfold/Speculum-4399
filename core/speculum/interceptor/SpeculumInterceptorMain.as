@@ -6,6 +6,7 @@ package speculum.interceptor
         {
             new SpeculumInterceptorLoader();
             new SpeculumInterceptorURLLoader();
+            new SpeculumInterceptorExternalInterface();
         }
     }
 }
