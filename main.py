@@ -27,10 +27,10 @@ def init(args):
     util = SWFUtil(os.environ["FLEX_PATH"])
 
     logging.info(f"Initializing {args.url}")
-    swf_url = resolve_swf_url(args.url)
-    logging.info(f"Resolve to {swf_url}")
 
     if not args.skip_download:
+        swf_url = resolve_swf_url(args.url)
+        logging.info(f"Resolve to {swf_url}")
         response = requests.get(
             swf_url, headers={"Referer": "http://www.4399.com"}, stream=True
         )
@@ -57,6 +57,10 @@ def init(args):
         if not game_swf.exists():
             logging.error("Game file not found")
             return
+        game_config_file = out / "game.json"
+        if not game_config_file.exists():
+            logging.error("Game configuration not found")
+            return
 
     logging.info("Retrieve necessary informaton of the game")
     info = util.get_info(game_swf)
@@ -65,9 +69,6 @@ def init(args):
     height = info["height"]
     logging.info(f"{width=}, {height=}, {frame_rate=}")
 
-    logging.info("Building loader")
-    util.build_loader(width, height, frame_rate, out / "Main.swf")
-
     logging.info("Building interceptor")
     util.build_interceptor(out / "_Interceptor.swf")
     logging.info("Injecting")
@@ -75,18 +76,22 @@ def init(args):
     util.inject(out / "_Merged.swf", out / "Game.swf")
     game_swf = out / "Game.swf"
 
-    logging.info("Saving configuration")
-    baseurl = urlparse(swf_url)
-    basepath = PurePosixPath(unquote(baseurl.path))
-    baseurl = baseurl._replace(path=f"{basepath.parent}").geturl()
-    game_config = {
-        "gamefile": str(game_swf),
-        "baseurl": str(baseurl),
-        "saveName": "test",
-        "savePath": "/",
-    }
-    with open(out / "game.json", "w") as f:
-        json.dump(game_config, f, ensure_ascii=False, indent=4)
+    logging.info("Building loader")
+    util.build_loader(width, height, frame_rate, out / "Main.swf")
+
+    if not args.skip_download:
+        logging.info("Saving configuration")
+        baseurl = urlparse(swf_url)
+        basepath = PurePosixPath(unquote(baseurl.path))
+        baseurl = baseurl._replace(path=f"{basepath.parent}").geturl()
+        game_config = {
+            "gamefile": str(game_swf),
+            "baseurl": str(baseurl),
+            "saveName": "test",
+            "savePath": "/",
+        }
+        with open(out / "game.json", "w") as f:
+            json.dump(game_config, f, ensure_ascii=False, indent=4)
     logging.info("Done")
 
 
@@ -113,7 +118,7 @@ def run(args):
         base_url=baseurl,
     ) as server:
         port = server.server_port
-        config["server"] = f"http://localhost:{port}"
+        config["server"] = f"http://localhost:{port}/"
         game_config.write_text(json.dumps(config, ensure_ascii=False, indent=4))
         logging.info(f"Server started at http://localhost:{port}")
 
@@ -134,7 +139,7 @@ subparsers = parser.add_subparsers()
 parser_get = subparsers.add_parser("init", help="Initialize with game URL")
 parser_get.add_argument("url", type=str, help="URL of the Game")
 parser_get.add_argument(
-    "--skip-download", action="store_true", help="Only resolve the URL"
+    "--skip-download", action="store_true", help="use local file"
 )
 parser_get.set_defaults(func=init)
 
