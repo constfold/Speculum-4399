@@ -31,7 +31,7 @@ def swf(self: BaseHTTPRequestHandler, query, path):
                 )
                 response.raise_for_status()
                 break
-            except ... as e:
+            except Exception as e:
                 logging.warning(f"Failed to fetch {path}: {e}")
                 retry -= 1
                 logging.info(f"Retry {retry} times")
