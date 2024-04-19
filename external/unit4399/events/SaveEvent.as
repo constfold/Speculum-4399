@@ -13,6 +13,8 @@ package unit4399.events
 
         public static const SAVE_LIST:String = "getuserdatalist";
 
+        public static const SAVE_LIST_COUNT:String = "getuserdatalistcount";
+
         protected var _data:Object;
 
         public function SaveEvent(param1:String, data:Object, bubbles:Boolean = false, cancelable:Boolean = false)

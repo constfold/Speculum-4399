@@ -59,7 +59,7 @@ package speculum.loader
 
 			var loader:Loader = new Loader();
 			loader.contentLoaderInfo.addEventListener(Event.COMPLETE, this.onLoadComplete);
-			loader.load(new URLRequest(this.config.gamefile));
+			loader.load(new URLRequest(this.config.gamefile), new LoaderContext(false, ApplicationDomain.currentDomain));
 		}
 
 		private function onLoadComplete(e:Event):void
@@ -82,19 +82,25 @@ package speculum.loader
 
 		/* API */
 
+		private var logInfo:Object = null;
 		public function get isLog():Object
 		{
 			trace("isLog");
-			return {
-					uid: 1,
-					name: "test",
-					type: ""
-				};
+			return this.logInfo;
 		}
 
 		public function showLogPanel():void
 		{
 			trace("showLogPanel");
+			var log:Object = {
+					uid: 1,
+					name: "test"
+				};
+			this.logInfo = log;
+			setTimeout(function():void
+				{
+					stage.dispatchEvent(new SaveEvent(SaveEvent.LOG, log));
+				}, 500);
 		}
 
 		public function getServerTime():void
@@ -102,59 +108,64 @@ package speculum.loader
 			trace("getServerTime");
 			setTimeout(function():void
 				{
-					stage.dispatchEvent(new DataEvent("serverTimeEvent", true, false, "2000-01-01 00:00:00"));
+					stage.dispatchEvent(new DataEvent("serverTimeEvent", false, false, "2015-01-01 00:00:00"));
+				}, 1000);
+		}
+
+		public function getData(ui:Boolean = true, index:Number = 0):void
+		{
+			trace("getData");
+			var so:SharedObject = SharedObject.getLocal(this.config.saveName, this.config.savePath, false);
+			setTimeout(function():void
+				{
+					stage.dispatchEvent(new SaveEvent(SaveEvent.SAVE_GET, so.data.list[index], true, false));
 				}, 500);
 		}
 
-		// public function getData(ui:Boolean = true, index:Number = 0):void
-		// {
-		// 	trace("getData");
-		// 	var so:SharedObject = SharedObject.getLocal(this.config.saveName, this.config.savePath, false);
-		// 	setTimeout(function():void
-		// 		{
-		// 			stage.dispatchEvent(new SaveEvent(SaveEvent.SAVE_GET, so.data.list[index], true, false));
-		// 		}, 500);
-		// }
+		public function getList():void
+		{
+			trace("getList");
+			var so:SharedObject = SharedObject.getLocal(this.config.saveName, this.config.savePath, false);
+			setTimeout(function():void
+				{
+					stage.dispatchEvent(new SaveEvent(SaveEvent.SAVE_LIST, so.data.list, true, false));
+				}, 500);
+		}
 
-		// public function getList():void
-		// {
-		// 	trace("getList");
-		// 	var so:SharedObject = SharedObject.getLocal(this.config.saveName, this.config.savePath, false);
-		// 	setTimeout(function():void
-		// 		{
-		// 			stage.dispatchEvent(new SaveEvent(SaveEvent.SAVE_LIST, so.data.list, true, false));
-		// 		}, 500);
-		// }
+		public function getBalance():void
+		{
+			trace("getBalance");
+			setTimeout(function():void
+				{
+					stage.dispatchEvent(new PayEvent(PayEvent.GET_MONEY, {balance: 20000}, true, false));
+				}, 500);
+		}
 
-		// public function getBalance():void
-		// {
-		// 	trace("getBalance");
-		// 	setTimeout(function():void
-		// 		{
-		// 			stage.dispatchEvent(new PayEvent(PayEvent.GET_MONEY, {balance: 20000}, true, false));
-		// 		}, 500);
-		// }
+		public function saveData(title:String, data:Object, ui:Boolean = true, index:int = 0):void
+		{
+			trace("saveData");
+			var so:SharedObject = SharedObject.getLocal(this.config.saveName, this.config.savePath, false);
+			so.data.list[index] = {
+					"index": index,
+					"title": title,
+					"data": data,
+					"datetime": "2000-01-01 00:00:00"
+				};
+			setTimeout(function():void
+				{
+					stage.dispatchEvent(new SaveEvent(SaveEvent.SAVE_SET, true, true, false));
+				}, 500);
+		}
 
-		// public function saveData(title:String, data:Object, ui:Boolean = true, index:int = 0):void
-		// {
-		// 	trace("saveData");
-		// 	var so:SharedObject = SharedObject.getLocal(this.config.saveName, this.config.savePath, false);
-		// 	so.data.list[index] = {
-		// 			"index": index,
-		// 			"title": title,
-		// 			"data": data,
-		// 			"datetime": "2000-01-01 00:00:00"
-		// 		};
-		// 	setTimeout(function():void
-		// 		{
-		// 			stage.dispatchEvent(new SaveEvent(SaveEvent.SAVE_SET, true, true, false));
-		// 		}, 500);
-		// }
+		public function decMoney_As3(param1:int):void
+		{
+			trace("decMoney_As3");
+			stage.dispatchEvent(new PayEvent(PayEvent.DEC_MONEY, {balance: 20000}, true, false));
+		}
 
-		// public function decMoney_As3(param1:int):void
-		// {
-		// 	trace("decMoney_As3");
-		// 	stage.dispatchEvent(new PayEvent(PayEvent.DEC_MONEY, {balance: 20000}, true, false));
-		// }
+		public function getVariables(idx:int, ids:Array):void
+		{
+			trace("getVariables, idx: " + idx + ", ids: " + ids);
+		}
 	}
 }
