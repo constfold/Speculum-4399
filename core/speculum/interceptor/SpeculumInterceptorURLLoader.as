@@ -23,6 +23,7 @@ package speculum.interceptor
             var config:Object = JSON.parse(event.target.data);
             // modify request
             this.request.url = config.server + this.request.url;
+            trace("Intercepted: " + this.request.url);
             super.load(this.request);
         }
     }
