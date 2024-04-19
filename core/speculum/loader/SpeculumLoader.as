@@ -176,5 +176,33 @@ package speculum.loader
 					stage.dispatchEvent(new DataEvent("StoreStateEvent", false, false, "1"));
 				}, 500);
 		}
+
+		public function buyPropNd(param1:Object):void
+		{
+			trace("buyPropNd");
+			param1.balance = 20000;
+			setTimeout(function():void
+				{
+					stage.dispatchEvent(new ShopEvent(ShopEvent.SHOP_BUY_ND, param1, true, false));
+				}, 500);
+		}
+
+		public function getTotalPaiedFun(exInfo:Object = null):void
+		{
+			trace("getTotalPaiedFun");
+			setTimeout(function():void
+				{
+					stage.dispatchEvent(new PayEvent(PayEvent.PAY_MONEY, {balance: 20000}, true, false));
+				}, 500);
+		}
+
+		public function getTotalRechargedFun(exInfo:Object = null):void
+		{
+			trace("getTotalRechargedFun");
+			setTimeout(function():void
+				{
+					stage.dispatchEvent(new PayEvent(PayEvent.RECHARGED_MONEY, {balance: 20000}, true, false));
+				}, 500);
+		}
 	}
 }
