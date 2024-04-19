@@ -1,5 +1,5 @@
 import logging
-import re
+import os
 import requests
 import json
 from urllib.parse import urlparse, parse_qs, unquote
@@ -10,35 +10,55 @@ from http.server import BaseHTTPRequestHandler
 from backends.private import *
 from backends.annotation import handle, HANDLERS
 
+from speculum.swfutil import SWFUtil
+
 
 @handle("get", "", r"(?P<path>.+?\.swf)")
-def swf(self, query, path):
+def swf(self: BaseHTTPRequestHandler, query, path):
     logging.info(f"GET SWF {path}")
     cache_dir = (Path("out") / "cache").resolve()
     cache_path = cache_dir.joinpath(path.strip("/")).resolve()
     assert cache_path.is_relative_to(cache_dir), f"{cache_path} not in {cache_dir}"
 
-    if cache_path.exists():
-        logging.info(f"Cache hit {cache_path}")
-        self.send_response(200)
-        self.wfile.write(cache_path.read_bytes())
-        return
-    try:
-        response = requests.get(
-            self.base_url + path,
-            headers={"Referer": "http://www.4399.com"},
-        )
-    except Exception as e:
-        logging.error(f"Failed to fetch {path}: {e}")
-        self.send_response(500)
-        return
+    if not cache_path.exists():
+        logging.info(f"Downloading at {self.base_url + path}")
+        retry = 3
+        while True:
+            try:
+                response = requests.get(
+                    self.base_url + path,
+                    headers={"Referer": "http://www.4399.com"},
+                )
+                response.raise_for_status()
+                break
+            except ... as e:
+                logging.warning(f"Failed to fetch {path}: {e}")
+                retry -= 1
+                logging.info(f"Retry {retry} times")
+                if retry == 0:
+                    self.send_response(500)
+                    logging.error(f"Failed to fetch {path}")
+                    return
 
-    logging.info(f"Caching {path} to {cache_path}")
-    cache_path.parent.mkdir(parents=True, exist_ok=True)
-    cache_path.write_bytes(response.content)
+        logging.info(f"Processing {path} to {cache_path}")
+        cache_path.parent.mkdir(parents=True, exist_ok=True)
+        rawfile = cache_path.with_suffix(".raw" + cache_path.suffix)
+        rawfile.write_bytes(response.content)
 
+        merged_file = cache_path.with_suffix(".merged" + cache_path.suffix)
+        util = SWFUtil(os.environ["FLEX_PATH"])
+        util.merge(rawfile, Path("out") / "_Interceptor.swf", merged_file)
+        util.inject(merged_file, cache_path)
+    else:
+        logging.info(f"Cache hit {path}")
+
+    logging.info(f"Cache {cache_path}")
+    data = cache_path.read_bytes()
     self.send_response(200)
-    self.wfile.write(response.content)
+    self.send_header("Content-Type", "application/x-shockwave-flash")
+    self.send_header("Content-Length", len(data))
+    self.end_headers()
+    self.wfile.write(data)
 
 
 @handle("get", "cdn.comment.4399pk.com", r"/control/ctrl_mo_v5.swf")
@@ -65,13 +85,14 @@ class SpeculumHandler(BaseHTTPRequestHandler):
             if match:
                 handler["handler"](self, query, **match.groupdict())
                 return
-        logging.error(f"Unhandled GET {url.geturl()}")
+        logging.error(f"Unhandled GET {url.geturl()}, {query=}")
         self.send_response(404)
 
     def do_POST(self):
         url = urlparse(
             self.path.replace("/http:", "http:").replace("/https:", "https:")
         )
+        query = parse_qs(url.query)
         data = self.rfile.read(int(self.headers["Content-Length"]))
         if self.headers.get("Content-Type") == "application/json":
             data = json.loads(data)
@@ -84,5 +105,5 @@ class SpeculumHandler(BaseHTTPRequestHandler):
             if match:
                 handler["handler"](self, data, **match.groupdict())
                 return
-        logging.error(f"Unhandled POST {url.geturl()}")
+        logging.error(f"Unhandled POST {url.geturl()}, {data=}, {query=}")
         self.send_response(404)
