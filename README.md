@@ -1,6 +1,4 @@
 <h1 align=center>SPECULUM-4399</h1>
-<p align=center></div><img src="ARCHITECTURE.png" style="width: 50%;"/></p>
-
 > [!NOTE]
 > 项目仅仅满足个人学习交流，不保证任何有效性。
 
@@ -8,6 +6,13 @@
 - 无需浏览器（只需本地 Flash Player Standalone）
 - 无需账号（也可以玩造梦西游等需要账号的游戏）
 - 自动嗅探下载游戏
+- 更易携带的存档
+
+### 已测试游戏
+- [造梦西游3](https://www.4399.com/flash/zmhj.htm?g=3)
+- [造梦西游2](https://www.4399.com/flash/zmhj.htm?g=2)
+- [爆枪突击](https://www.4399.com/flash/130396.htm)
+- [勇者之刃 信仰篇](https://www.4399.com/flash/yzzrhj.htm?g=2)
 
 ## 使用说明
 - 初始化游戏
@@ -53,8 +58,10 @@ echo %CWD% > %APPDATA%\Macromedia\Flash Player\#Security\FlashPlayerTrust\trust.
 
 5. 参照 `.env.example` 创建 `.env` 文件，填写相关信息。
 
+## 协议
+除 `external` 文件夹下的文件外，其余文件均采用 [AGPL-3.0 协议](LICENSE) 进行许可。
+
 ## 其他
 细节参考[这篇博文](https://blog.itsmygo.tech/posts/play-an-4399-flash-game-offline/)。
 
-## 协议
-除 `external` 文件夹下的文件外，其余文件均采用 [AGPL-3.0 协议](LICENSE) 进行许可。
+<p align=center></div><img src="ARCHITECTURE.png" style="width: 80%;"/></p>
