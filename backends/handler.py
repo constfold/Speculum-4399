@@ -123,7 +123,9 @@ class SpeculumHandler(BaseHTTPRequestHandler):
         super().__init__(*args, **kwargs)
 
     def do_GET(self):
-        url = urlparse(self.path.replace("/http:", "http:"))
+        url = urlparse(
+            self.path.replace("/http:", "http:").replace("/https:", "https:")
+        )
         query = parse_qs(url.query)
         handlers = HANDLERS["get"].get(url.netloc, [])
         for handler in handlers:
