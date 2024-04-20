@@ -144,10 +144,17 @@ class SpeculumHandler(BaseHTTPRequestHandler):
         for handler in handlers:
             match = handler["pattern"].match(self.url.path)
             if match:
-                handler["handler"](self, query, **match.groupdict())
-                return
-        logging.error(f"Unhandled GET {url.geturl()}, {query=}")
-        self.send_response(404)
+                try:
+                    handler["handler"](self, query, **match.groupdict())
+                except Exception as e:
+                    logging.error(f"Failed to handle GET {self.url}, {query=}")
+                    logging.exception(e)
+                    self.send_response(500)
+                finally:
+                    break
+        else:
+            logging.error(f"Unhandled GET {self.url}, {query=}")
+            self.send_response(404)
 
     def do_POST(self):
         self.normalize_url()
@@ -162,7 +169,16 @@ class SpeculumHandler(BaseHTTPRequestHandler):
         for handler in handlers:
             match = handler["pattern"].match(self.url.path)
             if match:
-                handler["handler"](self, data, **match.groupdict())
-                return
-        logging.error(f"Unhandled POST {url.geturl()}, {data=}, {query=}")
-        self.send_response(404)
+                try:
+                    handler["handler"](self, data, **match.groupdict())
+                except Exception as e:
+                    logging.error(
+                        f"Failed to handle POST {self.url}, {self.headers=}, {data=}, {query=}"
+                    )
+                    logging.exception(e)
+                    self.send_response(500)
+                finally:
+                    break
+        else:
+            logging.error(f"Unhandled POST {self.url}, {data=}, {query=}")
+            self.send_response(404)
