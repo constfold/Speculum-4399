@@ -139,6 +139,7 @@ package speculum.loader
 						"data": data,
 						"datetime": formatter.format(new Date())
 					});
+			request.contentType = "application/json";
 			var loader:URLLoader = new URLLoader();
 			loader.addEventListener(Event.COMPLETE, function(e:Event):void
 				{
