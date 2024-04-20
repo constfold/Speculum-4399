@@ -122,14 +122,27 @@ class SpeculumHandler(BaseHTTPRequestHandler):
         self.base_url = base_url
         super().__init__(*args, **kwargs)
 
+    def normalize_url(self):
+        """
+        Normalize the URL to handle different URL formats
+
+        Examples:
+        - `/http://example.com` -> `http://example.com`
+        - `/https://example.com` -> `https://example.com`
+        - `//example.com` -> `http://example.com`
+        - `/abc.swf` -> `/abc.swf`
+        """
+        path = unquote(self.path.removeprefix("/+"))
+
+        self.url = urlparse(path)
+        logging.debug(f"Normalized {self.path} to {repr(self.url)}")
+
     def do_GET(self):
-        url = urlparse(
-            self.path.replace("/http:", "http:").replace("/https:", "https:")
-        )
-        query = parse_qs(url.query)
-        handlers = HANDLERS["get"].get(url.netloc, [])
+        self.normalize_url()
+        query = parse_qs(self.url.query)
+        handlers = HANDLERS["get"].get(self.url.netloc, [])
         for handler in handlers:
-            match = handler["pattern"].match(url.path)
+            match = handler["pattern"].match(self.url.path)
             if match:
                 handler["handler"](self, query, **match.groupdict())
                 return
@@ -137,19 +150,17 @@ class SpeculumHandler(BaseHTTPRequestHandler):
         self.send_response(404)
 
     def do_POST(self):
-        url = urlparse(
-            self.path.replace("/http:", "http:").replace("/https:", "https:")
-        )
-        query = parse_qs(url.query)
+        self.normalize_url()
+        query = parse_qs(self.url.query)
         data = self.rfile.read(int(self.headers["Content-Length"]))
         if self.headers.get("Content-Type") == "application/json":
             data = json.loads(data)
         elif self.headers.get("Content-Type") == "application/x-www-form-urlencoded":
             data = parse_qs(data.decode())
 
-        handlers = HANDLERS["post"].get(url.netloc, [])
+        handlers = HANDLERS["post"].get(self.url.netloc, [])
         for handler in handlers:
-            match = handler["pattern"].match(url.path)
+            match = handler["pattern"].match(self.url.path)
             if match:
                 handler["handler"](self, data, **match.groupdict())
                 return

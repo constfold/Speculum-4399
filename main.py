@@ -83,7 +83,7 @@ def init(args):
         logging.info("Saving configuration")
         baseurl = urlparse(swf_url)
         basepath = PurePosixPath(unquote(baseurl.path))
-        baseurl = baseurl._replace(path=f"{basepath.parent}").geturl()
+        baseurl = baseurl._replace(path=f"{basepath.parent}").geturl() + "/"
         game_config = {
             "gamefile": str(game_swf),
             "baseurl": str(baseurl),
@@ -118,7 +118,7 @@ def run(args):
         base_url=baseurl,
     ) as server:
         port = server.server_port
-        config["server"] = f"http://localhost:{port}/"
+        config["server"] = f"http://localhost:{port}/+"
         game_config.write_text(json.dumps(config, ensure_ascii=False, indent=4))
         logging.info(f"Server started at http://localhost:{port}")
 
