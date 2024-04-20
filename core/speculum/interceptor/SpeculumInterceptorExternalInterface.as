@@ -28,7 +28,16 @@ package speculum.interceptor
 
         public static function call(functionName:String, ...rest:Array):*
         {
-            return 1;
+            trace("ExternalInterface call: " + functionName + "(" + rest.join(", ") + ")");
+            if (functionName == "UniLogin.getUid")
+            {
+                return 1;
+            }
+            else if (functionName == "UniLogin.getUname")
+            {
+                return "test";
+            }
+            throw new Error("ExternalInterface is not available in this context.");
         }
     }
 }
