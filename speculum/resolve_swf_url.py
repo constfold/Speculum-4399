@@ -94,6 +94,8 @@ def resolve_swf_url(url):
 
         assert result, "SWF URL not found"
         assert result.endswith(".swf"), f"Invalid SWF URL {result}"
+        if not result.startswith("http") and not result.startswith("https"):
+            result = f"http:{result}"
 
         browser.close()
         return result
