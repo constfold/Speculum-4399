@@ -22,7 +22,7 @@ def swf(self: BaseHTTPRequestHandler, query, path):
     cache_path = cache_dir.joinpath(path.strip("/")).resolve()
     assert cache_path.is_relative_to(cache_dir), f"{cache_path} not in {cache_dir}"
 
-    if not cache_path.exists():
+    if self.no_cache or not cache_path.exists():
         logging.info(f"Downloading at {self.base_url + path}")
         retry = 3
         while True:
@@ -42,15 +42,18 @@ def swf(self: BaseHTTPRequestHandler, query, path):
                     logging.error(f"Failed to fetch {path}")
                     return
 
-        logging.info(f"Processing {path} to {cache_path}")
         cache_path.parent.mkdir(parents=True, exist_ok=True)
-        rawfile = cache_path.with_suffix(".raw" + cache_path.suffix)
-        rawfile.write_bytes(response.content)
+        if self.inject_nested:
+            logging.info(f"Processing {path} to {cache_path}")
+            rawfile = cache_path.with_suffix(".raw" + cache_path.suffix)
+            rawfile.write_bytes(response.content)
 
-        merged_file = cache_path.with_suffix(".merged" + cache_path.suffix)
-        util = SWFUtil(os.environ["FLEX_PATH"])
-        util.merge(rawfile, Path("out") / "_Interceptor.swf", merged_file)
-        util.inject(merged_file, cache_path)
+            merged_file = cache_path.with_suffix(".merged" + cache_path.suffix)
+            util = SWFUtil(os.environ["FLEX_PATH"])
+            util.merge(rawfile, Path("out") / "_Interceptor.swf", merged_file)
+            util.inject(merged_file, cache_path)
+        else:
+            cache_path.write_bytes(response.content)
     else:
         logging.info(f"Cache hit {path}")
 
@@ -143,8 +146,10 @@ def save_list(self, query):
 
 
 class SpeculumHandler(BaseHTTPRequestHandler):
-    def __init__(self, base_url, *args, **kwargs):
+    def __init__(self, base_url, no_cache, inject_nested, *args, **kwargs):
         self.base_url = base_url
+        self.no_cache = no_cache
+        self.inject_nested = inject_nested
         super().__init__(*args, **kwargs)
 
     def normalize_url(self):

@@ -116,6 +116,8 @@ def run(args):
         ("localhost", int(os.environ["BACKEND_PORT"])),
         SpeculumHandler,
         base_url=baseurl,
+        no_cache=args.no_cache,
+        inject_nested=args.inject_nested,
     ) as server:
         port = server.server_port
         config["server"] = f"http://localhost:{port}/+"
@@ -142,6 +144,10 @@ parser_get.add_argument("--skip-download", action="store_true", help="use local 
 parser_get.set_defaults(func=init)
 
 parser_run = subparsers.add_parser("run", aliases=["r"], help="Start the game")
+parser_run.add_argument("--no-cache", action="store_true", help="Do not use cache")
+parser_run.add_argument(
+    "--inject-nested", action="store_true", help="Inject nested swf"
+)
 parser_run.set_defaults(func=run)
 
 parser_clean = subparsers.add_parser("clean", help="Clean up the generated files")
