@@ -138,9 +138,7 @@ subparsers = parser.add_subparsers()
 
 parser_get = subparsers.add_parser("init", help="Initialize with game URL")
 parser_get.add_argument("url", type=str, help="URL of the Game")
-parser_get.add_argument(
-    "--skip-download", action="store_true", help="use local file"
-)
+parser_get.add_argument("--skip-download", action="store_true", help="use local file")
 parser_get.set_defaults(func=init)
 
 parser_run = subparsers.add_parser("run", aliases=["r"], help="Start the game")
@@ -163,7 +161,10 @@ parser_clean.set_defaults(
 if __name__ == "__main__":
     FORMAT = "%(message)s"
     logging.basicConfig(
-        level="NOTSET", format=FORMAT, datefmt="[%X]", handlers=[RichHandler()]
+        level="NOTSET",
+        format=FORMAT,
+        datefmt="[%X]",
+        handlers=[RichHandler(rich_tracebacks=True)],
     )
     load_dotenv(".env", override=True)
 
