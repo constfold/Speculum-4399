@@ -165,6 +165,13 @@ package speculum.loader
 		public function getVariables(idx:int, ids:Array):void
 		{
 			trace("getVariables, idx: " + idx + ", ids: " + ids);
+			setTimeout(function():void
+				{
+					stage.dispatchEvent(new UnionEvent(UnionEvent.UNION_ERROR, {
+									code: "99999",
+									msg: "NOT SUPPORTED"
+								}, true, false));
+				}, 500);
 		}
 
 		public function getStoreState():void
