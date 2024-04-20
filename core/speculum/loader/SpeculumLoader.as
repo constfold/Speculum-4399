@@ -4,19 +4,18 @@ package speculum.loader
 	import flash.system.ApplicationDomain;
 	import flash.system.Security;
 	import flash.display.Loader;
-	import flash.utils.ByteArray;
 	import flash.events.Event;
-	import flash.display.Sprite;
 	import flash.display.DisplayObject;
 	import flash.events.DataEvent;
 	import flash.utils.setTimeout;
-	import flash.net.SharedObject;
 	import flash.net.URLLoader;
 	import flash.net.URLRequest;
 	import unit4399.events.*;
 	import flash.display.Loader;
 	import flash.display.LoaderInfo;
 	import flash.display.MovieClip;
+	import flash.globalization.DateTimeFormatter;
+	import flash.globalization.LocaleID;
 
 	public class SpeculumLoader extends MovieClip
 	{
@@ -24,12 +23,14 @@ package speculum.loader
 		private var _loader:Loader;
 		private var game:* = null;
 		private var config:Object = null;
+		private var formatter:DateTimeFormatter = new DateTimeFormatter(LocaleID.DEFAULT);
 
 		public function SpeculumLoader(params:Object = null):void
 		{
 			super();
 			Security.allowDomain("*");
 			Security.allowInsecureDomain("*");
+			this.formatter.setDateTimePattern("yyyy-MM-dd HH:mm:ss");
 			addEventListener(Event.ADDED_TO_STAGE, this.loadConfig);
 		}
 
@@ -46,16 +47,6 @@ package speculum.loader
 			trace("loadGame");
 			removeEventListener(Event.COMPLETE, this.loadGame);
 			this.config = JSON.parse(e.target.data);
-
-			var so:SharedObject = SharedObject.getLocal(this.config.saveName, this.config.savePath, false);
-			if (!so.data.list)
-			{
-				so.data.list = [];
-				for (var i:int = 0; i < 7; i++)
-				{
-					so.data.list[i] = null;
-				}
-			}
 
 			var loader:Loader = new Loader();
 			loader.contentLoaderInfo.addEventListener(Event.COMPLETE, this.onLoadComplete);
@@ -108,28 +99,52 @@ package speculum.loader
 			trace("getServerTime");
 			setTimeout(function():void
 				{
-					stage.dispatchEvent(new DataEvent("serverTimeEvent", false, false, "2015-01-01 00:00:00"));
+					stage.dispatchEvent(new DataEvent("serverTimeEvent", false, false, formatter.format(new Date())));
 				}, 1000);
 		}
 
 		public function getData(ui:Boolean = true, index:Number = 0):void
 		{
 			trace("getData");
-			var so:SharedObject = SharedObject.getLocal(this.config.saveName, this.config.savePath, false);
-			setTimeout(function():void
+			var request:URLRequest = new URLRequest(config.server + "http://api.speculum.fake/save/get/" + index);
+			var loader:URLLoader = new URLLoader();
+			loader.addEventListener(Event.COMPLETE, function(e:Event):void
 				{
-					stage.dispatchEvent(new SaveEvent(SaveEvent.SAVE_GET, so.data.list[index], true, false));
-				}, 500);
+					stage.dispatchEvent(new SaveEvent(SaveEvent.SAVE_GET, JSON.parse(e.target.data).data, true, false));
+				});
+			loader.load(request);
 		}
 
 		public function getList():void
 		{
 			trace("getList");
-			var so:SharedObject = SharedObject.getLocal(this.config.saveName, this.config.savePath, false);
-			setTimeout(function():void
+			var request:URLRequest = new URLRequest(config.server + "http://api.speculum.fake/save/list");
+			var loader:URLLoader = new URLLoader();
+			loader.addEventListener(Event.COMPLETE, function(e:Event):void
 				{
-					stage.dispatchEvent(new SaveEvent(SaveEvent.SAVE_LIST, so.data.list, true, false));
-				}, 500);
+					stage.dispatchEvent(new SaveEvent(SaveEvent.SAVE_LIST, JSON.parse(e.target.data), true, false));
+				});
+			loader.load(request);
+		}
+
+		public function saveData(title:String, data:Object, ui:Boolean = true, index:int = 0):void
+		{
+			trace("saveData");
+
+			var request:URLRequest = new URLRequest(config.server + "http://api.speculum.fake/save/save");
+			request.method = "POST";
+			request.data = JSON.stringify( {
+						"index": index,
+						"title": title,
+						"data": data,
+						"datetime": formatter.format(new Date())
+					});
+			var loader:URLLoader = new URLLoader();
+			loader.addEventListener(Event.COMPLETE, function(e:Event):void
+				{
+					stage.dispatchEvent(new SaveEvent(SaveEvent.SAVE_SET, true, true, false));
+				});
+			loader.load(request);
 		}
 
 		public function getBalance():void
@@ -138,22 +153,6 @@ package speculum.loader
 			setTimeout(function():void
 				{
 					stage.dispatchEvent(new PayEvent(PayEvent.GET_MONEY, {balance: 20000}, true, false));
-				}, 500);
-		}
-
-		public function saveData(title:String, data:Object, ui:Boolean = true, index:int = 0):void
-		{
-			trace("saveData");
-			var so:SharedObject = SharedObject.getLocal(this.config.saveName, this.config.savePath, false);
-			so.data.list[index] = {
-					"index": index,
-					"title": title,
-					"data": data,
-					"datetime": "2000-01-01 00:00:00"
-				};
-			setTimeout(function():void
-				{
-					stage.dispatchEvent(new SaveEvent(SaveEvent.SAVE_SET, true, true, false));
 				}, 500);
 		}
 

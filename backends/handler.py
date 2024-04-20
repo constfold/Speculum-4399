@@ -1,5 +1,7 @@
 import logging
 import os
+import random
+from time import sleep
 import requests
 import json
 from urllib.parse import urlparse, parse_qs, unquote
@@ -69,6 +71,50 @@ def control_swf(self, query):
 @handle("get", "stat.api.4399.com", r"/flash_ctrl_version.xml")
 def control_version_xml(self, query):
     self.send_response(418)
+
+
+@handle("get", "api.speculum.fake", r"/save/get/(?P<index>\d+)")
+def save_get(self, query, index):
+    logging.info(f"GET /save/get, {index=}")
+    game_save = Path("out") / "game_save.json"
+    if game_save.exists():
+        save = json.loads(game_save.read_text(encoding="utf-8"))["saves"][int(index)]
+    else:
+        save = None
+
+    self.send_response(200)
+    self.send_header("Content-Type", "application/json; charset=utf-8")
+    self.end_headers()
+    self.wfile.write(json.dumps({"data": save}).encode())
+
+
+@handle("post", "api.speculum.fake", r"/save/save")
+def save_save(self, data):
+    logging.info("POST /save/save")
+    game_save = Path("out") / "game_save.json"
+    if game_save.exists():
+        saves = json.loads(game_save.read_text(encoding="utf-8"))
+    else:
+        saves = {"saves": [None] * 7}
+
+    saves["saves"][data["index"]] = data
+    game_save.write_text(json.dumps(saves), encoding="utf-8")
+    self.send_response(200)
+
+
+@handle("get", "api.speculum.fake", r"/save/list")
+def save_list(self, query):
+    logging.info("GET /save/list")
+    game_save = Path("out") / "game_save.json"
+    if game_save.exists():
+        saves = json.loads(game_save.read_text(encoding="utf-8"))["saves"]
+    else:
+        saves = [None] * 7
+
+    self.send_response(200)
+    self.send_header("Content-Type", "application/json; charset=utf-8")
+    self.end_headers()
+    self.wfile.write(json.dumps(saves).encode())
 
 
 class SpeculumHandler(BaseHTTPRequestHandler):
