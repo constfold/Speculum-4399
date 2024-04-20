@@ -66,11 +66,13 @@ def swf(self: BaseHTTPRequestHandler, query, path):
 @handle("get", "cdn.comment.4399pk.com", r"/control/ctrl_mo_v5.swf")
 def control_swf(self, query):
     self.send_response(418)
+    self.end_headers()
 
 
 @handle("get", "stat.api.4399.com", r"/flash_ctrl_version.xml")
 def control_version_xml(self, query):
     self.send_response(418)
+    self.end_headers()
 
 
 @handle("get", "stat.api.4399.com", r"/archive_statistics/log.js")
@@ -90,6 +92,7 @@ def save_index(self, query):
         )
     else:
         self.send_response(404)
+        self.end_headers()
 
 
 @handle("get", "api.speculum.fake", r"/save/get/(?P<index>\d+)")
@@ -119,6 +122,9 @@ def save_save(self, data):
     saves["saves"][data["index"]] = data
     game_save.write_text(json.dumps(saves), encoding="utf-8")
     self.send_response(200)
+    self.send_header("Content-Type", "application/json; charset=utf-8")
+    self.end_headers()
+    self.wfile.write(json.dumps({"success": 1}).encode())
 
 
 @handle("get", "api.speculum.fake", r"/save/list")
