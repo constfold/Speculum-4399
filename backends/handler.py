@@ -73,6 +73,25 @@ def control_version_xml(self, query):
     self.send_response(418)
 
 
+@handle("get", "stat.api.4399.com", r"/archive_statistics/log.js")
+def archive_statistics_log_js(self, query):
+    self.send_response(200)
+
+
+@handle("get", "save.api.4399.com", r"/index\.php")
+def save_index(self, query):
+    logging.info(f"GET /save/index, {query=}")
+    if query.get("c") == ["realname"] and query.get("ac") == ["status"]:
+        self.send_response(200)
+        self.send_header("Content-Type", "application/json; charset=utf-8")
+        self.end_headers()
+        self.wfile.write(
+            json.dumps({"success": 1, "cert": 1, "reconfirm": 0, "status": 1}).encode()
+        )
+    else:
+        self.send_response(404)
+
+
 @handle("get", "api.speculum.fake", r"/save/get/(?P<index>\d+)")
 def save_get(self, query, index):
     logging.info(f"GET /save/get, {index=}")

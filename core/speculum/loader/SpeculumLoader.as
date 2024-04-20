@@ -203,5 +203,20 @@ package speculum.loader
 					stage.dispatchEvent(new PayEvent(PayEvent.RECHARGED_MONEY, {balance: 20000}, true, false));
 				}, 500);
 		}
+
+		public function submitScoreToRankLists(idx:uint, rankInfoAry:Array):void
+		{
+			trace("submitScoreToRankLists, idx: " + idx + ", rankInfoAry: " + rankInfoAry);
+			setTimeout(function():void
+				{
+					stage.dispatchEvent(new RankListEvent(RankListEvent.RANKLIST_SUCCESS, {
+									apiName: "3",
+									data: [ {
+											code: "1",
+											message: "NOT SUPPORTED"
+										}]
+								}, true, false));
+				}, 500);
+		}
 	}
 }
